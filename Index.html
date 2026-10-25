@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERP & Ventas JCO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons@4.29.2/dist/feather.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } } };
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+    /* Secciones y modales */
+    .seccion-app { display: none; animation: fadeIn 0.3s ease-out; }
+    .seccion-app.activa { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+    .modal { display: none; } .modal.activo { display: flex; }
+    .modal.activo .modal-caja { animation: popIn .22s ease-out; }
+    #pantallaLogin { display: flex; }
+    #appPrincipal { display: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { scrollbar-width: none; }
+
+    /* Tarjetas */
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.03); }
+    .kpi { transition: transform .15s ease, box-shadow .15s ease; }
+    .kpi:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -12px rgba(15,23,42,.18); }
+    .icono-chip { width: 2.5rem; height: 2.5rem; border-radius: .75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* Formularios */
+    .etiqueta { display: block; font-size: .75rem; font-weight: 600; color: #475569; margin-bottom: .375rem; letter-spacing: .01em; }
+    .campo { width: 100%; padding: .7rem .9rem; border: 1px solid #cbd5e1; border-radius: .75rem; background: #fff; font-size: .9rem; color: #0f172a; transition: border-color .15s, box-shadow .15s; }
+    .campo::placeholder { color: #94a3b8; }
+    .campo:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.15); }
+    select.campo { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .8rem center; padding-right: 2.25rem; }
+    input[type=file].campo { padding: .5rem; background: #f8fafc; }
+    input[type=file].campo::file-selector-button { border: 0; background: #eef2ff; color: #4338ca; font-weight: 600; padding: .45rem .9rem; border-radius: .5rem; margin-right: .75rem; cursor: pointer; }
+
+    /* Botones */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; font-weight: 600; font-size: .9rem; border-radius: .75rem; padding: .7rem 1.1rem; transition: background-color .15s, box-shadow .15s, transform .05s, color .15s; cursor: pointer; white-space: nowrap; }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-primario { background: #4f46e5; color: #fff; box-shadow: 0 6px 16px -6px rgba(79,70,229,.6); }
+    .btn-primario:hover { background: #4338ca; }
+    .btn-oscuro { background: #0f172a; color: #fff; }
+    .btn-oscuro:hover { background: #1e293b; }
+    .btn-exito { background: #10b981; color: #fff; box-shadow: 0 6px 16px -6px rgba(16,185,129,.6); }
+    .btn-exito:hover { background: #059669; }
+    .btn-suave { background: #eef2ff; color: #4338ca; }
+    .btn-suave:hover { background: #e0e7ff; }
+    .btn-blanco { background: #fff; color: #334155; border: 1px solid #e2e8f0; }
+    .btn-blanco:hover { background: #f8fafc; }
+    .btn-peligro { background: #dc2626; color: #fff; }
+    .btn-peligro:hover { background: #b91c1c; }
+    .btn-icono { padding: .5rem; border-radius: .6rem; }
+    .btn-sm { padding: .45rem .8rem; font-size: .8rem; border-radius: .6rem; }
+
+    /* Navegación lateral */
+    .tab-btn { align-items: center; gap: .75rem; padding: .65rem .9rem; font-size: .875rem; font-weight: 500; border-radius: .75rem; color: #475569; transition: background-color .15s, color .15s; white-space: nowrap; flex-shrink: 0; }
+    .tab-btn svg { width: 1.15rem; height: 1.15rem; color: #94a3b8; transition: color .15s; }
+    .tab-btn:hover { background: #f1f5f9; color: #0f172a; }
+    .tab-btn.nav-activo { background: #eef2ff; color: #4338ca; font-weight: 600; }
+    .tab-btn.nav-activo svg { color: #4f46e5; }
+
+    /* Sub-pestañas */
+    .subtab { padding: .6rem 1rem; font-size: .875rem; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: color .15s, border-color .15s; }
+    .subtab:hover { color: #334155; }
+    .subtab.subtab-activo { color: #4f46e5; border-color: #4f46e5; }
+
+    /* Tablas */
+    .tabla { width: 100%; text-align: left; white-space: nowrap; border-collapse: separate; border-spacing: 0; }
+    .tabla thead th { position: sticky; top: 0; z-index: 1; background: #f8fafc; color: #64748b; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: .75rem 1rem; border-bottom: 1px solid #e2e8f0; }
+    .tabla tbody td { padding: .85rem 1rem; border-bottom: 1px solid #f1f5f9; font-size: .875rem; vertical-align: middle; }
+    .tabla tbody tr { transition: background-color .12s; }
+    .tabla tbody tr:hover { background: #f8fafc; }
+    .tabla tbody tr:last-child td { border-bottom: 0; }
+    .tabla-wrap { border: 1px solid #e2e8f0; border-radius: .875rem; overflow: auto; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px; font-size: .72rem; font-weight: 600; line-height: 1.2; }
+
+    /* Checkbox de permisos */
+    .chk { display: flex; align-items: center; gap: .5rem; padding: .55rem .75rem; border: 1px solid #e2e8f0; border-radius: .65rem; cursor: pointer; transition: border-color .15s, background-color .15s; }
+    .chk:hover { border-color: #c7d2fe; background: #f8faff; }
+    .chk input { accent-color: #4f46e5; width: 1rem; height: 1rem; }
+    .chk:has(input:checked) { border-color: #a5b4fc; background: #eef2ff; color: #3730a3; font-weight: 600; }
+
+    input[type=number]::-webkit-inner-spin-button { opacity: .5; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col md:flex-row">
+
+  <!-- ================= PANTALLA DE LOGIN ================= -->
+  <div id="pantallaLogin" class="fixed inset-0 min-h-screen flex items-center justify-center p-4 bg-slate-950 z-50 overflow-hidden">
+    <div class="absolute -top-40 -left-40 w-[32rem] h-[32rem] bg-indigo-600 rounded-full blur-3xl opacity-30"></div>
+    <div class="absolute -bottom-40 -right-32 w-[28rem] h-[28rem] bg-violet-600 rounded-full blur-3xl opacity-25"></div>
+    <div class="absolute inset-0 opacity-[0.04]" style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;"></div>
+
+    <div class="w-full max-w-md relative z-10">
+      <div class="bg-white/95 backdrop-blur p-8 sm:p-10 rounded-3xl shadow-2xl ring-1 ring-white/10">
+        <div class="text-center mb-8">
+          <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-5">
+            <i data-feather="box" class="text-white w-8 h-8"></i>
+          </div>
+          <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">JCO System</h1>
+          <p class="text-slate-500 mt-1 text-sm">ERP & Ventas · Ingresa tus credenciales</p>
+        </div>
+        <form id="formLogin" class="space-y-5">
+          <div>
+            <label class="etiqueta" for="loginUsuario">Usuario</label>
+            <div class="relative">
+              <i data-feather="user" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="text" id="loginUsuario" required autocomplete="username" class="campo" style="padding-left:2.5rem" placeholder="Tu usuario">
+            </div>
+          </div>
+          <div>
+            <label class="etiqueta" for="loginPass">Contraseña</label>
+            <div class="relative">
+              <i data-feather="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input type="password" id="loginPass" required autocomplete="current-password" class="campo" style="padding-left:2.5rem" placeholder="••••••••">
+            </div>
+          </div>
+          <button type="submit" id="btnLogin" class="btn btn-primario w-full !py-3">Ingresar</button>
+        </form>
+        <div id="msjLogin" class="mt-4 text-center text-sm font-semibold hidden p-3 rounded-xl"></div>
+      </div>
+      <p class="text-center text-xs text-slate-500 mt-6">© JCO System</p>
+    </div>
+  </div>
+
+  <!-- ================= APP PRINCIPAL ================= -->
+  <aside id="appSidebar" class="w-full md:w-64 md:h-screen md:sticky md:top-0 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex-shrink-0 flex-col z-20 hidden">
+    <div class="px-5 py-5 md:py-6 flex items-center justify-between">
+      <div class="flex items-center min-w-0">
+        <img id="imgLogoTienda" src="" class="hidden w-9 h-9 mr-3 rounded-xl object-cover border border-slate-200 shadow-sm">
+        <div id="iconoPorDefecto" class="w-9 h-9 mr-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/30 flex-shrink-0">
+          <i data-feather="box" class="w-5 h-5 text-white"></i>
+        </div>
+        <div class="min-w-0">
+          <span id="txtNombreTienda" class="block font-bold text-slate-900 truncate leading-tight">Cargando...</span>
+          <span class="block text-[11px] font-medium text-slate-400 uppercase tracking-wider">ERP & Ventas</span>
+        </div>
+      </div>
+      <div class="md:hidden"><button onclick="cerrarSesion()" class="btn btn-icono text-slate-500 hover:bg-red-50 hover:text-red-600" title="Cerrar Sesión"><i data-feather="log-out" class="w-5 h-5"></i></button></div>
+    </div>
+    <p class="hidden md:block px-6 pt-2 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Menú</p>
+    <nav class="flex-1 px-3 pb-3 md:pb-4 gap-1 overflow-x-auto md:overflow-x-visible md:overflow-y-auto flex flex-row md:flex-col scrollbar-hide">
+      <button id="nav-sec-dashboard" onclick="cambiarSeccion('sec-dashboard', this)" class="tab-btn md:w-full hidden"><i data-feather="pie-chart"></i> Dashboard</button>
+      <button id="nav-sec-ventas" onclick="cambiarSeccion('sec-ventas', this)" class="tab-btn md:w-full hidden"><i data-feather="shopping-cart"></i> Ventas</button>
+      <button id="nav-sec-clientes" onclick="cambiarSeccion('sec-clientes', this)" class="tab-btn md:w-full hidden"><i data-feather="users"></i> Clientes</button>
+      <button id="nav-sec-inventario" onclick="cambiarSeccion('sec-inventario', this)" class="tab-btn md:w-full hidden"><i data-feather="layers"></i> Inventario</button>
+      <button id="nav-sec-crear" onclick="cambiarSeccion('sec-crear', this)" class="tab-btn md:w-full hidden"><i data-feather="plus-circle"></i> Crear Prod.</button>
+      <button id="nav-sec-registro" onclick="cambiarSeccion('sec-registro', this)" class="tab-btn md:w-full hidden"><i data-feather="truck"></i> Ajuste Stock</button>
+      <button id="nav-sec-socios" onclick="cambiarSeccion('sec-socios', this)" class="tab-btn md:w-full hidden"><i data-feather="briefcase"></i> Socios</button>
+      <button id="nav-sec-historial" onclick="cambiarSeccion('sec-historial', this)" class="tab-btn md:w-full hidden"><i data-feather="file-text"></i> Reportes</button>
+      <button id="nav-sec-config" onclick="cambiarSeccion('sec-config', this)" class="tab-btn md:w-full hidden"><i data-feather="settings"></i> Ajustes</button>
+    </nav>
+    <div class="hidden md:block p-4 border-t border-slate-100">
+      <div class="flex items-center gap-3 px-2 mb-3">
+        <div id="avatarUsuario" class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">?</div>
+        <div class="min-w-0">
+          <p id="txtUsuarioActual" class="text-sm font-semibold text-slate-800 truncate">—</p>
+          <p class="text-xs text-slate-400">Sesión activa</p>
+        </div>
+      </div>
+      <button onclick="cerrarSesion()" class="btn btn-sm w-full text-red-600 bg-red-50 hover:bg-red-100"><i data-feather="log-out" class="w-4 h-4"></i> Cerrar Sesión</button>
+    </div>
+  </aside>
+
+  <main id="appContent" class="flex-1 min-w-0 p-4 sm:p-6 lg:p-10 overflow-y-auto bg-slate-50 hidden">
+
+    <!-- DASHBOARD -->
+    <div id="sec-dashboard" class="seccion-app max-w-7xl mx-auto">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-8">
+        <div>
+          <p class="text-sm font-medium text-slate-400" id="dashFecha"></p>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Dashboard y Finanzas</h2>
+        </div>
+      </div>
+
+      <!-- Fila 1: Caja y Liquidez -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
+        <div class="kpi relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-600 text-white p-6 rounded-2xl shadow-lg shadow-indigo-500/25">
+          <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10"></div>
+          <div class="absolute right-10 -bottom-12 w-24 h-24 rounded-full bg-white/5"></div>
+          <div class="relative flex items-center justify-between">
+            <p class="text-indigo-100 text-xs font-semibold uppercase tracking-wider">Caja Actual · Disponible</p>
+            <div class="icono-chip bg-white/15"><i data-feather="dollar-sign" class="w-5 h-5"></i></div>
+          </div>
+          <p class="relative text-3xl font-black mt-3 tracking-tight" id="dashCajaActual">0</p>
+        </div>
+        <div class="kpi card p-6">
+          <div class="flex items-center justify-between">
+            <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total Cobrado (Histórico)</p>
+            <div class="icono-chip bg-emerald-50 text-emerald-600"><i data-feather="trending-up" class="w-5 h-5"></i></div>
+          </div>
+          <p class="text-2xl font-extrabold mt-3 text-slate-900 tracking-tight" id="dashTotalRecaudado">0</p>
+        </div>
+        <div class="kpi card p-6 !border-red-100 bg-gradient-to-br from-white to-red-50/60">
+          <div class="flex items-center justify-between">
+            <p class="text-red-600 text-xs font-semibold uppercase tracking-wider">Cuentas por Cobrar</p>
+            <div class="icono-chip bg-red-100 text-red-600"><i data-feather="clock" class="w-5 h-5"></i></div>
+          </div>
+          <p class="text-2xl font-extrabold mt-3 text-red-700 tracking-tight" id="dashCuentasCobrar">0</p>
+        </div>
+      </div>
+
+      <!-- Fila 2: Ventas y Rendimiento -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <div class="kpi card p-5">
+          <div class="icono-chip bg-indigo-50 text-indigo-600 mb-3"><i data-feather="calendar" class="w-5 h-5"></i></div>
+          <p class="text-slate-500 text-xs font-medium">Ventas Este Mes</p>
+          <p class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5 tracking-tight" id="dashVentasMes">0</p>
+        </div>
+        <div class="kpi card p-5">
+          <div class="icono-chip bg-sky-50 text-sky-600 mb-3"><i data-feather="bar-chart-2" class="w-5 h-5"></i></div>
+          <p class="text-slate-500 text-xs font-medium">Ventas Anuales (Este Año)</p>
+          <p class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5 tracking-tight" id="dashVentasAnuales">0</p>
+        </div>
+        <div class="kpi card p-5">
+          <div class="icono-chip bg-violet-50 text-violet-600 mb-3"><i data-feather="activity" class="w-5 h-5"></i></div>
+          <p class="text-slate-500 text-xs font-medium">Ventas Totales Registradas</p>
+          <p class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5 tracking-tight" id="dashVentasTotales">0</p>
+        </div>
+        <div class="kpi card p-5">
+          <div class="icono-chip bg-amber-50 text-amber-600 mb-3"><i data-feather="package" class="w-5 h-5"></i></div>
+          <p class="text-slate-500 text-xs font-medium">Productos en Catálogo</p>
+          <p class="text-lg sm:text-xl font-bold text-slate-900 mt-0.5 tracking-tight" id="dashTotalProductos">0</p>
+        </div>
+      </div>
+
+      <!-- Fila 3: Gráfico y Alertas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-slate-900">Evolución de Ventas</h3>
+              <p class="text-xs text-slate-400">Total mensual en Guaraníes</p>
+            </div>
+            <span class="badge bg-indigo-50 text-indigo-700"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Ventas (Gs)</span>
+          </div>
+          <div class="relative h-64 sm:h-72"><canvas id="graficoVentas"></canvas></div>
+        </div>
+        <div class="card p-6">
+          <h3 class="font-bold text-slate-900">Estado del Inventario</h3>
+          <p class="text-xs text-slate-400 mb-5">Productos según nivel de stock</p>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-4 rounded-xl bg-red-50 border border-red-100">
+              <div class="flex items-center gap-3"><div class="icono-chip bg-white text-red-500 shadow-sm"><i data-feather="alert-octagon" class="w-5 h-5"></i></div><div><p class="font-semibold text-red-900 text-sm">Sin Stock</p><p class="text-xs text-red-600/80">Reponer urgente</p></div></div>
+              <span class="text-2xl font-black text-red-600" id="dashSinStock">0</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl bg-amber-50 border border-amber-100">
+              <div class="flex items-center gap-3"><div class="icono-chip bg-white text-amber-500 shadow-sm"><i data-feather="alert-triangle" class="w-5 h-5"></i></div><div><p class="font-semibold text-amber-900 text-sm">Bajo Stock</p><p class="text-xs text-amber-700/80">En o bajo el mínimo</p></div></div>
+              <span class="text-2xl font-black text-amber-600" id="dashBajoStock">0</span>
+            </div>
+            <div class="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div class="flex items-center gap-3"><div class="icono-chip bg-white text-emerald-500 shadow-sm"><i data-feather="check-circle" class="w-5 h-5"></i></div><div><p class="font-semibold text-emerald-900 text-sm">Stock OK</p><p class="text-xs text-emerald-700/80">Nivel saludable</p></div></div>
+              <span class="text-2xl font-black text-emerald-600" id="dashEnStock">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOCIOS Y RETIROS -->
+    <div id="sec-socios" class="seccion-app max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Retiros de Socios</h2>
+        <p class="text-slate-500 text-sm mt-1">Distribución de utilidades y control de retiros.</p>
+      </div>
+      <div class="card p-6 mb-6">
+        <div class="flex justify-between items-center mb-5">
+          <div class="flex items-center gap-3">
+            <div class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="pie-chart" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Estado Financiero por Socio</h3>
+          </div>
+          <button type="button" onclick="cargarSocios()" class="btn btn-suave btn-sm"><i data-feather="refresh-cw" class="w-4 h-4"></i> Refrescar</button>
+        </div>
+        <div class="tabla-wrap">
+          <table class="tabla">
+            <thead><tr><th>Socio</th><th class="text-center">Participación</th><th class="text-right">Le Corresponde (Total)</th><th class="text-right">Ya Retirado</th><th class="text-right !text-indigo-600">Saldo a Favor</th></tr></thead>
+            <tbody id="tablaEstadoSocios"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="card p-6 h-fit">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="icono-chip bg-red-50 text-red-600"><i data-feather="arrow-up-right" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Registrar Retiro</h3>
+          </div>
+          <p class="text-sm text-slate-500 mb-6 flex gap-2 bg-slate-50 rounded-xl p-3"><i data-feather="info" class="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-400"></i> El sistema bloqueará el retiro si el monto supera el "Saldo a Favor".</p>
+          <form id="formRetiroSocio" class="space-y-4">
+            <div><label class="etiqueta">Socio que Retira</label><select id="socioSelect" required class="campo"></select></div>
+            <div><label class="etiqueta">Monto a Retirar (Gs.)</label><input type="number" id="socioMonto" min="1" required class="campo font-semibold" placeholder="0"></div>
+            <div><label class="etiqueta">Notas / Motivo (Opcional)</label><textarea id="socioNotas" rows="3" class="campo resize-none" placeholder="Ej: Retiro mensual"></textarea></div>
+            <button type="submit" id="btnGuardarRetiro" class="btn btn-primario w-full !py-3">Ejecutar Retiro</button>
+          </form>
+        </div>
+        <div class="lg:col-span-2 card p-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="icono-chip bg-slate-100 text-slate-600"><i data-feather="list" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Historial de Retiros</h3>
+          </div>
+          <div class="tabla-wrap max-h-96">
+            <table class="tabla">
+              <thead><tr><th>Fecha</th><th>Socio</th><th>Motivo</th><th class="text-right">Monto Retirado</th></tr></thead>
+              <tbody id="tablaPagosSocios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTAS (CARRITO) -->
+    <div id="sec-ventas" class="seccion-app max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Punto de Venta</h2>
+        <p class="text-slate-500 text-sm mt-1">Registra una nueva venta al contado o a crédito.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="card p-6">
+            <div class="flex justify-between items-center mb-5">
+              <h2 class="text-base font-bold text-slate-900 flex items-center gap-3"><span class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="user" class="w-5 h-5"></i></span> Datos del Cliente</h2>
+              <div id="msjClienteVentas" class="text-sm"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+              <div>
+                <label class="etiqueta" for="venRuc">RUC / CI</label>
+                <div class="relative">
+                  <i data-feather="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                  <input type="text" id="venRuc" placeholder="Buscar cliente..." list="listaClientes" onchange="autocompletarCliente()" class="campo" style="padding-left:2.5rem">
+                </div>
+                <datalist id="listaClientes"></datalist>
+              </div>
+              <div><label class="etiqueta" for="venRazon">Razón Social <span class="text-red-500">*</span></label><input type="text" id="venRazon" placeholder="Nombre o empresa" required class="campo"></div>
+              <div><label class="etiqueta" for="venTel">Teléfono <span class="text-slate-400 font-normal">(Opcional)</span></label><input type="text" id="venTel" placeholder="09xx xxx xxx" class="campo"></div>
+              <div><label class="etiqueta" for="venEmail">Email <span class="text-slate-400 font-normal">(Opcional)</span></label><input type="email" id="venEmail" placeholder="cliente@correo.com" class="campo"></div>
+            </div>
+
+            <div class="border-t border-slate-100 mt-6 pt-6">
+              <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-3"><span class="icono-chip bg-emerald-50 text-emerald-600"><i data-feather="package" class="w-5 h-5"></i></span> Agregar Producto</h2>
+              <div class="flex gap-2">
+                <input list="listaProductosVentas" id="venProductoInput" placeholder="Buscar producto por nombre..." class="campo flex-1">
+                <datalist id="listaProductosVentas"></datalist>
+                <button type="button" onclick="agregarAlCarrito()" class="btn btn-primario !px-5"><i data-feather="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Añadir</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h3 class="font-bold text-slate-900 flex items-center gap-2"><i data-feather="shopping-bag" class="w-4 h-4 text-slate-400"></i> Carrito</h3>
+              <span id="venCantItems" class="badge bg-slate-100 text-slate-600">0 ítems</span>
+            </div>
+            <div class="overflow-x-auto min-h-[260px]">
+              <table class="tabla min-w-[560px]">
+                <thead><tr><th>Producto</th><th>Cant.</th><th>P. Unitario <span class="normal-case font-normal text-slate-400">(editable)</span></th><th class="text-right">Subtotal</th><th></th></tr></thead>
+                <tbody id="tablaCarrito"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-6 h-fit lg:sticky lg:top-6">
+          <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><i data-feather="file-text" class="w-5 h-5 text-slate-400"></i> Detalle de Facturación</h2>
+          <div class="space-y-4 border-b border-dashed border-slate-200 pb-5 mb-5">
+            <div class="flex justify-between text-slate-600 text-sm"><span>Subtotal</span><span id="venSubtotal" class="font-semibold text-slate-800">Gs. 0</span></div>
+            <div>
+              <label class="etiqueta" for="venDescuento">Descuento (Fijo en Gs)</label>
+              <input type="text" id="venDescuento" value="0"
+                     onfocus="this.value = (parseFloat(this.value.replace(/\D/g, '')) || 0)"
+                     onblur="this.value = formMoneda.format(parseFloat(this.value.replace(/\D/g, '')) || 0); actualizarTotalesVentas();"
+                     class="campo text-right font-bold">
+            </div>
+            <div>
+              <label class="etiqueta" for="venTipoVenta">Tipo de Venta</label>
+              <select id="venTipoVenta" class="campo font-semibold !bg-indigo-50 !border-indigo-200 text-indigo-700"><option value="Contado">Al Contado</option><option value="Credito">A Crédito (Requiere Cliente)</option></select>
+            </div>
+          </div>
+          <div class="rounded-2xl bg-slate-900 text-white p-5 mb-5">
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total a Cobrar</p>
+            <p id="venTotal" class="text-3xl font-black tracking-tight mt-1">Gs. 0</p>
+          </div>
+          <button type="button" id="btnProcesarVenta" onclick="procesarVenta()" class="btn bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/30 w-full !py-4 text-base">Finalizar Venta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES Y DEUDAS -->
+    <div id="sec-clientes" class="seccion-app w-full max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row justify-between md:items-end mb-8 gap-4">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Clientes</h2>
+          <p class="text-slate-500 text-sm mt-1">Cartera de clientes y cuentas por cobrar.</p>
+        </div>
+        <div class="flex w-full md:w-auto gap-2">
+          <div class="relative flex-1 md:w-72">
+            <i data-feather="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="buscadorClientes" onkeyup="filtrarClientes()" placeholder="Buscar por CI, nombre o teléfono..." class="campo" style="padding-left:2.5rem">
+          </div>
+          <button type="button" onclick="cargarClientes()" class="btn btn-blanco"><i data-feather="refresh-cw" class="w-4 h-4"></i><span class="hidden md:inline">Actualizar</span></button>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="tabla">
+            <thead><tr><th>RUC/CI</th><th>Razón Social</th><th>Teléfono</th><th class="text-right">Deuda Pendiente</th><th class="text-center">Acciones</th><th class="text-center">Editar</th></tr></thead>
+            <tbody id="tablaClientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div id="sec-inventario" class="seccion-app w-full max-w-7xl mx-auto">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Inventario y Precios</h2>
+          <p class="text-slate-500 text-sm mt-1">Catálogo de productos, costos y existencias.</p>
+        </div>
+        <button type="button" onclick="cargarDatosGenerales()" class="btn btn-blanco"><i data-feather="refresh-cw" class="w-4 h-4"></i> Actualizar</button>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="tabla">
+            <thead><tr><th class="w-12 text-center">Img</th><th>Cód.</th><th>Producto</th><th class="text-right">Costo Promedio</th><th class="text-right">P. Venta Ref.</th><th class="text-right">Stock</th><th class="text-center">Editar</th></tr></thead>
+            <tbody id="tablaInventario"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="sec-historial" class="seccion-app max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Reportes de Movimientos</h2>
+        <p class="text-slate-500 text-sm mt-1">Ventas, entradas y salidas de stock.</p>
+      </div>
+      <div class="card p-5 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div><label class="etiqueta">Tipo</label><select id="filtroTipo" class="campo"><option value="Todos">Todos</option><option value="Venta">Ventas</option><option value="Entrada">Entradas</option><option value="Salida">Salidas (Manuales)</option></select></div>
+          <div><label class="etiqueta">Días atrás</label><input type="number" id="filtroDias" value="30" class="campo"></div>
+          <div class="sm:col-span-2 flex items-end"><button type="button" onclick="cargarHistorial()" class="btn btn-oscuro w-full"><i data-feather="bar-chart" class="w-4 h-4"></i> Generar Reporte</button></div>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="tabla">
+            <thead><tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th class="text-right">Cant</th><th class="text-right">Total (Gs)</th><th>Detalle / Notas</th></tr></thead>
+            <tbody id="tablaHistorial"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREAR PRODUCTO -->
+    <div id="sec-crear" class="seccion-app max-w-3xl mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Registrar Producto</h2>
+        <p class="text-slate-500 text-sm mt-1">Agrega un nuevo artículo al catálogo.</p>
+      </div>
+      <div class="card p-6 sm:p-8">
+        <form id="formCrearProducto" class="space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div><label class="etiqueta">Código <span class="text-slate-400 font-normal">(Opcional)</span></label><input type="text" id="codigoProducto" placeholder="SKU-001" class="campo"></div>
+            <div class="sm:col-span-2"><label class="etiqueta">Nombre <span class="text-red-500">*</span></label><input type="text" id="nuevoNombre" required placeholder="Nombre del producto" class="campo"></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div><label class="etiqueta">Stock Mínimo <span class="text-red-500">*</span></label><input type="number" id="stockMinimo" required min="1" placeholder="Ej: 5" class="campo"></div>
+            <div><label class="etiqueta">Costo Compra <span class="text-slate-400 font-normal">(Opc)</span></label><input type="number" id="precioCompra" step="0.01" placeholder="Gs." class="campo"></div>
+            <div><label class="etiqueta">P. Venta Ref. <span class="text-slate-400 font-normal">(Opc)</span></label><input type="number" id="precioVenta" step="0.01" placeholder="Gs." class="campo"></div>
+          </div>
+          <div><label class="etiqueta">Fotos <span class="text-slate-400 font-normal">(Opcional, Máx 3)</span></label><input type="file" id="fotosProducto" accept="image/*" multiple class="campo"></div>
+          <button type="submit" id="btnCrearProducto" class="btn btn-oscuro w-full !py-3"><i data-feather="save" class="w-4 h-4"></i> Guardar Producto</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- AJUSTE MANUAL DE STOCK -->
+    <div id="sec-registro" class="seccion-app max-w-3xl mx-auto">
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Ajuste de Stock Manual</h2>
+        <p class="text-slate-500 text-sm mt-1">Registra compras, pérdidas o correcciones de inventario.</p>
+      </div>
+      <div class="card p-6 sm:p-8">
+        <form id="formularioMovimiento" class="space-y-5">
+          <div>
+            <label class="etiqueta">Producto <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <i data-feather="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input list="listaProductosVentas" id="productoMovimiento" required placeholder="Buscar producto..." class="campo" style="padding-left:2.5rem">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div><label class="etiqueta">Tipo de Movimiento</label><select id="tipoMov" class="campo"><option value="Entrada">Entrada (Compra)</option><option value="Salida">Salida (Pérdida/Ajuste)</option></select></div>
+            <div><label class="etiqueta">Cantidad <span class="text-red-500">*</span></label><input type="number" id="cantidadMov" min="1" required placeholder="0" class="campo"></div>
+            <div><label class="etiqueta">Costo Unit. <span class="text-slate-400 font-normal">(Opcional)</span></label><input type="number" id="precioMov" placeholder="Gs." class="campo"></div>
+          </div>
+          <div><label class="etiqueta">Comentario / Motivo <span class="text-slate-400 font-normal">(Opcional)</span></label><textarea id="notasMov" placeholder="Motivo del ajuste" class="campo resize-none" rows="3"></textarea></div>
+          <button type="submit" id="btnGuardarMov" class="btn btn-primario w-full !py-3">Registrar Ajuste</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CONFIGURACIÓN, USUARIOS Y SOCIOS CONFIG -->
+    <div id="sec-config" class="seccion-app max-w-5xl mx-auto space-y-6">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Ajustes</h2>
+        <p class="text-slate-500 text-sm mt-1">Configuración de la tienda, socios y usuarios.</p>
+      </div>
+      <div class="flex border-b border-slate-200 overflow-x-auto scrollbar-hide">
+        <button type="button" onclick="tabConfig('tabTienda')" id="btnTabTienda" class="subtab subtab-activo">Tienda & BD</button>
+        <button type="button" onclick="tabConfig('tabConfSocios')" id="btnTabConfSocios" class="subtab">Configurar Socios</button>
+        <button type="button" onclick="tabConfig('tabUsuarios')" id="btnTabUsuarios" class="subtab">Usuarios y Roles</button>
+        <button type="button" onclick="tabConfig('tabAccesos')" id="btnTabAccesos" class="subtab">Log de Accesos</button>
+      </div>
+
+      <div id="tabTienda" class="space-y-6">
+        <div class="card p-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="shopping-bag" class="w-5 h-5"></i></div>
+            <div><h3 class="text-lg font-bold text-slate-900">Ajustes de Tienda</h3><p class="text-xs text-slate-400">Nombre visible en el menú lateral</p></div>
+          </div>
+          <form id="formConfigTienda" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" id="inputNombreTienda" placeholder="Nombre de negocio" class="campo flex-1">
+            <button type="submit" class="btn btn-primario">Guardar Nombre</button>
+          </form>
+        </div>
+        <div class="rounded-2xl border border-red-200 bg-red-50/60 p-6">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="icono-chip bg-red-100 text-red-600"><i data-feather="database" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-red-900">Base de Datos</h3>
+          </div>
+          <p class="text-sm text-red-700/80 mb-5">Zona de riesgo. Estas acciones afectan directamente a Google Sheets.</p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button type="button" onclick="inicializarBase()" class="btn btn-blanco"><i data-feather="tool" class="w-4 h-4"></i> 1. Inicializar (Reparar)</button>
+            <button type="button" onclick="borrarTodo()" class="btn btn-peligro"><i data-feather="trash-2" class="w-4 h-4"></i> 2. Borrar Todo el Sistema</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabConfSocios" class="hidden space-y-6">
+        <div class="card p-6">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="percent" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Participación de Socios</h3>
+          </div>
+          <p class="text-sm text-slate-500 mb-6">Añade o elimina socios. Modifica sus nombres y asigna el porcentaje exacto de participación. <b class="text-slate-700">La suma total siempre debe ser 100%.</b></p>
+          <div id="listaConfigSocios" class="space-y-3 mb-4"></div>
+          <div class="flex flex-col sm:flex-row gap-3 border-t border-slate-100 pt-5">
+            <button type="button" onclick="agregarInputSocioConfig()" class="btn btn-blanco"><i data-feather="user-plus" class="w-4 h-4"></i> Añadir Socio</button>
+            <button type="button" onclick="guardarConfiguracionSocios(this)" class="btn btn-primario">Guardar Porcentajes</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabUsuarios" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-6">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="user-plus" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Nuevo Usuario</h3>
+          </div>
+          <form id="formUsuario" class="space-y-4">
+            <div><label class="etiqueta">Nombre de usuario</label><input type="text" id="usrNombre" required placeholder="usuario" class="campo"></div>
+            <div><label class="etiqueta">Contraseña</label><input type="password" id="usrPass" required placeholder="••••••••" class="campo"></div>
+            <p class="etiqueta !mb-2 pt-1">Permisos (Módulos)</p>
+            <div class="grid grid-cols-2 gap-2 text-sm text-slate-700">
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-dashboard" checked> Dashboard</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-ventas" checked> Ventas</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-clientes" checked> Clientes</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-inventario" checked> Inventario</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-crear"> Crear Prod.</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-registro"> Ajuste Stock</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-socios"> Socios</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-historial"> Reportes</label>
+              <label class="chk"><input type="checkbox" class="permiso-chk" value="sec-config"> Ajustes</label>
+            </div>
+            <button type="submit" id="btnCrearUsr" class="btn btn-oscuro w-full !py-3 mt-2">Crear Usuario</button>
+          </form>
+        </div>
+        <div class="card p-6 h-fit">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="icono-chip bg-slate-100 text-slate-600"><i data-feather="users" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Usuarios Activos</h3>
+          </div>
+          <div class="tabla-wrap">
+            <table class="tabla">
+              <thead><tr><th>Usuario</th><th class="text-center">Contraseña</th><th class="text-center">Eliminar</th></tr></thead>
+              <tbody id="tablaUsuarios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tabAccesos" class="hidden card p-6">
+        <div class="flex justify-between items-center mb-5">
+          <div class="flex items-center gap-3">
+            <div class="icono-chip bg-slate-100 text-slate-600"><i data-feather="shield" class="w-5 h-5"></i></div>
+            <h3 class="text-lg font-bold text-slate-900">Registro de Logins</h3>
+          </div>
+          <button type="button" onclick="cargarAccesos()" class="btn btn-suave btn-sm"><i data-feather="refresh-cw" class="w-4 h-4"></i> Actualizar</button>
+        </div>
+        <div class="tabla-wrap max-h-96">
+          <table class="tabla">
+            <thead><tr><th>Fecha y Hora</th><th>Usuario</th><th>Evento</th></tr></thead>
+            <tbody id="tablaAccesos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= MODALES ================= -->
+
+  <!-- MODAL HISTORIAL COMPLETO CLIENTE -->
+  <div id="modalHistorialCompletoCliente" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="modal-caja bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-start mb-4 gap-4">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Historial del cliente</p>
+          <h2 class="text-xl font-bold text-slate-900"><span id="lblNombreClienteHistorial" class="text-indigo-600"></span></h2>
+        </div>
+        <button type="button" onclick="cerrarModal('modalHistorialCompletoCliente')" class="btn btn-icono text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-feather="x" class="w-6 h-6"></i></button>
+      </div>
+      <div class="flex border-b border-slate-200 mb-4">
+        <button type="button" onclick="switchTabHistorial('compras')" id="tabBtnCompras" class="subtab subtab-activo">Compras</button>
+        <button type="button" onclick="switchTabHistorial('pagos')" id="tabBtnPagos" class="subtab">Pagos</button>
+      </div>
+      <div class="overflow-y-auto flex-1 tabla-wrap" id="tabCompras">
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Detalle</th><th class="text-center">Tipo</th><th class="text-right">Total</th><th class="text-center">Estado</th></tr></thead>
+          <tbody id="tablaHistorialComprasCliente"></tbody>
+        </table>
+      </div>
+      <div class="overflow-y-auto flex-1 tabla-wrap hidden" id="tabPagos">
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Ref Venta</th><th class="text-right">Monto Abonado</th></tr></thead>
+          <tbody id="tablaHistorialPagosCliente"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PAGOS CLIENTE (DEUDAS) -->
+  <div id="modalDeudaCliente" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="modal-caja bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-start mb-5 gap-4">
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Créditos pendientes</p>
+          <h2 class="text-xl font-bold text-slate-900"><span id="nombreDeudor" class="text-indigo-600"></span></h2>
+        </div>
+        <button type="button" onclick="cerrarModal('modalDeudaCliente')" class="btn btn-icono text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-feather="x" class="w-6 h-6"></i></button>
+      </div>
+      <div class="overflow-y-auto flex-1 tabla-wrap">
+        <table class="tabla">
+          <thead><tr><th>Fecha</th><th>Detalle</th><th class="text-right">Balance</th><th class="text-center">Abonar</th></tr></thead>
+          <tbody id="tablaDeudasContenido"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PRODUCTO -->
+  <div id="modalEditar" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="modal-caja bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-3"><span class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="edit-2" class="w-5 h-5"></i></span> Editar Producto</h2>
+        <button type="button" onclick="cerrarModal('modalEditar')" class="btn btn-icono text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-feather="x" class="w-6 h-6"></i></button>
+      </div>
+      <input type="hidden" id="editId">
+      <div class="space-y-4">
+        <div><label class="etiqueta">Código</label><input type="text" id="editCodigo" placeholder="Código" class="campo"></div>
+        <div><label class="etiqueta">Nombre</label><input type="text" id="editNombre" placeholder="Nombre" class="campo font-semibold"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="etiqueta">Stock Mínimo</label><input type="number" id="editStockMin" placeholder="Stock Mín" class="campo"></div>
+          <div><label class="etiqueta">P. Venta Ref.</label><input type="number" id="editPrecioVenta" placeholder="P. Venta Ref." class="campo"></div>
+        </div>
+      </div>
+      <div class="mt-6 pt-5 border-t border-slate-100 flex justify-between items-center">
+        <button type="button" onclick="eliminarProductoModal(this)" class="btn btn-sm text-red-600 hover:bg-red-50"><i data-feather="trash-2" class="w-4 h-4"></i> Eliminar</button>
+        <div class="flex gap-2">
+          <button type="button" onclick="cerrarModal('modalEditar')" class="btn btn-blanco">Cancelar</button>
+          <button type="button" onclick="guardarEdicion(this)" class="btn btn-primario">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR CLIENTE -->
+  <div id="modalEditarCliente" class="modal fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 items-center justify-center p-4">
+    <div class="modal-caja bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-3"><span class="icono-chip bg-indigo-50 text-indigo-600"><i data-feather="user" class="w-5 h-5"></i></span> Editar Cliente</h2>
+        <button type="button" onclick="cerrarModal('modalEditarCliente')" class="btn btn-icono text-slate-400 hover:text-slate-700 hover:bg-slate-100"><i data-feather="x" class="w-6 h-6"></i></button>
+      </div>
+      <input type="hidden" id="editIdCliente">
+      <div class="space-y-4">
+        <div><label class="etiqueta">RUC / CI</label><input type="text" id="editRucCli" placeholder="RUC / CI" class="campo"></div>
+        <div><label class="etiqueta">Razón Social</label><input type="text" id="editRazonCli" placeholder="Razón Social" class="campo font-semibold"></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label class="etiqueta">Teléfono</label><input type="text" id="editTelCli" placeholder="Teléfono" class="campo"></div>
+          <div><label class="etiqueta">Email</label><input type="email" id="editEmailCli" placeholder="Email" class="campo"></div>
+        </div>
+      </div>
+      <div class="mt-6 pt-5 border-t border-slate-100 flex justify-between items-center">
+        <button type="button" onclick="eliminarClienteModal(this)" class="btn btn-sm text-red-600 hover:bg-red-50">Eliminar</button>
+        <div class="flex gap-2">
+          <button type="button" onclick="cerrarModal('modalEditarCliente')" class="btn btn-blanco">Cancelar</button>
+          <button type="button" onclick="guardarEdicionCliente(this)" class="btn btn-primario">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT GLOBAL -->
+  <script>
+    feather.replace();
+    const formMoneda = new Intl.NumberFormat('es-PY');
+    let inventarioGlobal = [], clientesGlobal = [], carritoVentas = [], graficoInstance = null;
+    let usuarioActual = null;
+    let configSociosTemp = [];
+
+    // Fila de "sin datos" reutilizable para las tablas
+    function filaVacia(colspan, texto, icono = 'inbox') {
+      return `<tr><td colspan="${colspan}" class="!py-12 text-center"><div class="flex flex-col items-center text-slate-400"><i data-feather="${icono}" class="w-8 h-8 mb-2 text-slate-300"></i><span class="text-sm font-medium">${texto}</span></div></td></tr>`;
+    }
+
+    // --- INICIALIZACIÓN Y LOGIN ---
+    window.onload = () => {
+      let sesion = localStorage.getItem('jco_sesion');
+      if(sesion) { usuarioActual = JSON.parse(sesion); iniciarApp(); }
+      else { document.getElementById('pantallaLogin').style.display = 'flex'; }
+    };
+
+    document.getElementById('formLogin').addEventListener('submit', e => {
+      e.preventDefault();
+      const btn = document.getElementById('btnLogin'), msg = document.getElementById('msjLogin');
+      btn.innerText = "Verificando..."; btn.disabled = true; msg.classList.add('hidden');
+      google.script.run.withSuccessHandler(res => {
+        if(res.error) { msg.innerText = res.message; msg.classList.remove('hidden', 'bg-green-50', 'text-green-700'); msg.classList.add('bg-red-50', 'text-red-700'); btn.innerText = "Ingresar"; btn.disabled = false; }
+        else { localStorage.setItem('jco_sesion', JSON.stringify(res.usuario)); usuarioActual = res.usuario; iniciarApp(); }
+      }).withFailureHandler(err => { msg.innerText = "Error: " + err.message; msg.classList.remove('hidden'); msg.classList.add('bg-red-50', 'text-red-700'); btn.innerText = "Ingresar"; btn.disabled = false;
+      }).procesarLogin(document.getElementById('loginUsuario').value, document.getElementById('loginPass').value);
+    });
+
+    function cerrarSesion() { localStorage.removeItem('jco_sesion'); location.reload(); }
+
+    function iniciarApp() {
+      document.getElementById('pantallaLogin').style.display = 'none';
+      document.getElementById('appSidebar').classList.remove('hidden'); document.getElementById('appContent').classList.remove('hidden');
+      document.getElementById('appSidebar').classList.add('flex'); document.getElementById('appContent').classList.add('block');
+
+      const nombreUsr = String(usuarioActual.nombre || '');
+      document.getElementById('txtUsuarioActual').innerText = nombreUsr || '—';
+      document.getElementById('avatarUsuario').innerText = (nombreUsr.charAt(0) || '?').toUpperCase();
+      const fechaHoy = new Date().toLocaleDateString('es-PY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('dashFecha').innerText = `Hola, ${nombreUsr} · ${fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1)}`;
+
+      let primeraSeccion = null;
+      usuarioActual.permisos.forEach(p => { let navItem = document.getElementById('nav-' + p); if(navItem) { navItem.style.display = 'flex'; if(!primeraSeccion) primeraSeccion = p; } });
+      if(usuarioActual.nombre === 'JCO') { document.querySelectorAll('.tab-btn').forEach(btn => btn.style.display = 'flex'); primeraSeccion = 'sec-dashboard'; }
+      if(primeraSeccion) cambiarSeccion(primeraSeccion, document.getElementById('nav-' + primeraSeccion)); else alert("Tu usuario no tiene permisos.");
+
+      renderCarrito();
+      cargarConfigGlobal(); cargarDatosGenerales(); cargarClientes(); cargarDashboardChart(); cargarSocios();
+    }
+
+    // --- NAVEGACIÓN ---
+    function cambiarSeccion(id, btn) {
+      document.querySelectorAll('.seccion-app').forEach(el => el.classList.remove('activa')); document.getElementById(id).classList.add('activa');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('nav-activo'));
+      btn.classList.add('nav-activo');
+      document.getElementById('appContent').scrollTop = 0;
+
+      if(id === 'sec-historial') cargarHistorial();
+      if(id === 'sec-inventario' || id === 'sec-ventas') cargarDatosGenerales();
+      if(id === 'sec-clientes') cargarClientes();
+      if(id === 'sec-dashboard') cargarDashboardChart();
+      if(id === 'sec-socios') cargarSocios();
+      if(id === 'sec-config' && (usuarioActual.permisos.includes('sec-config') || usuarioActual.nombre === 'JCO')) { tabConfig('tabTienda'); }
+    }
+
+    function cargarConfigGlobal() { google.script.run.withSuccessHandler(c => { document.getElementById('txtNombreTienda').innerText = c.nombre; document.getElementById('inputNombreTienda').value = c.nombre; if(c.logo) { document.getElementById('imgLogoTienda').src = c.logo; document.getElementById('imgLogoTienda').classList.remove('hidden'); document.getElementById('iconoPorDefecto').classList.add('hidden'); } }).obtenerConfiguracion(); }
+
+    function cargarDashboardChart() {
+      google.script.run.withSuccessHandler(datos => {
+        document.getElementById('dashVentasMes').innerText = "Gs. " + formMoneda.format(datos.ventasMesActual);
+        document.getElementById('dashCuentasCobrar').innerText = "Gs. " + formMoneda.format(datos.cuentasPorCobrar);
+
+        document.getElementById('dashCajaActual').innerText = "Gs. " + formMoneda.format(datos.cajaActual);
+        document.getElementById('dashTotalRecaudado').innerText = "Gs. " + formMoneda.format(datos.totalRecaudadoHistorico);
+        document.getElementById('dashVentasAnuales').innerText = "Gs. " + formMoneda.format(datos.ventasAnuales);
+        document.getElementById('dashVentasTotales').innerText = "Gs. " + formMoneda.format(datos.ventasTotales);
+
+        if (graficoInstance) graficoInstance.destroy();
+        const ctx = document.getElementById('graficoVentas').getContext('2d');
+        const degradado = ctx.createLinearGradient(0, 0, 0, 280);
+        degradado.addColorStop(0, 'rgba(79, 70, 229, 0.28)');
+        degradado.addColorStop(1, 'rgba(79, 70, 229, 0)');
+        graficoInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: datos.labelsMeses, datasets: [{ label: 'Ventas (Gs)', data: datos.dataMeses, borderColor: '#4f46e5', backgroundColor: degradado, fill: true, tension: 0.35, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: '#fff', pointBorderColor: '#4f46e5', pointBorderWidth: 2 }] },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', padding: 12, cornerRadius: 10, displayColors: false, titleFont: { family: 'Inter', weight: '600' }, bodyFont: { family: 'Inter' }, callbacks: { label: c => 'Gs. ' + formMoneda.format(c.parsed.y) } } },
+            scales: {
+              x: { grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+              y: { beginAtZero: true, border: { display: false }, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, callback: v => formMoneda.format(v) } }
+            }
+          }
+        });
+      }).obtenerEstadisticasDashboard();
+    }
+
+    // --- MÓDULO SOCIOS ---
+    function cargarSocios() {
+      google.script.run.withSuccessHandler(datos => {
+        if (!datos || datos.error) { alert("Error cargando socios: " + (datos ? datos.message : "Desconocido")); return; }
+
+        const tbEstado = document.getElementById('tablaEstadoSocios'); tbEstado.innerHTML = '';
+        const select = document.getElementById('socioSelect'); select.innerHTML = '<option value="" disabled selected>Seleccione el socio...</option>';
+        configSociosTemp = datos.socios;
+
+        if(datos.socios.length === 0) tbEstado.innerHTML = filaVacia(5, 'No hay socios configurados.', 'users');
+        datos.socios.forEach(s => {
+          select.innerHTML += `<option value="${s.id}">${s.nombre} (${s.porcentaje}%)</option>`;
+          tbEstado.innerHTML += `<tr>
+            <td><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">${String(s.nombre).charAt(0).toUpperCase()}</div><span class="font-semibold text-slate-900">${s.nombre}</span></div></td>
+            <td class="text-center"><span class="badge bg-slate-100 text-slate-700">${s.porcentaje}%</span></td>
+            <td class="text-right text-slate-600">Gs. ${formMoneda.format(s.corresponde)}</td>
+            <td class="text-right font-semibold text-red-500">- Gs. ${formMoneda.format(s.retirado)}</td>
+            <td class="text-right font-extrabold text-indigo-700 bg-indigo-50/60">Gs. ${formMoneda.format(s.restante)}</td>
+          </tr>`;
+        });
+
+        const tbPagos = document.getElementById('tablaPagosSocios'); tbPagos.innerHTML = '';
+        if(datos.retiros.length === 0) tbPagos.innerHTML = filaVacia(4, 'No hay retiros registrados.');
+        datos.retiros.forEach(r => {
+          tbPagos.innerHTML += `<tr><td class="text-slate-500">${new Date(r.fecha).toLocaleString()}</td><td class="font-semibold text-slate-800">${r.socio}</td><td class="text-slate-500">${r.notas || '—'}</td><td class="text-right font-bold text-red-600">- Gs. ${formMoneda.format(r.monto)}</td></tr>`;
+        });
+        feather.replace();
+      }).withFailureHandler(err => alert("Fallo al conectar con Google Sheets para cargar socios.")).obtenerDatosModuloSocios();
+    }
+
+    document.getElementById('formRetiroSocio').addEventListener('submit', e => {
+      e.preventDefault();
+      const socioId = document.getElementById('socioSelect').value;
+      const monto = parseFloat(document.getElementById('socioMonto').value) || 0;
+
+      const socObj = configSociosTemp.find(s => s.id === socioId);
+      if(monto > socObj.restante) return alert(`🚨 Error: Fondos Insuficientes.\n\nEl socio "${socObj.nombre}" solo tiene un Saldo a Favor de Gs. ${formMoneda.format(socObj.restante)}.\nNo puedes retirar más de lo que le corresponde.`);
+      if(!confirm(`¿Registrar retiro de Gs. ${formMoneda.format(monto)} para ${socObj.nombre}?`)) return;
+
+      const btn = document.getElementById('btnGuardarRetiro'); btn.disabled = true; btn.innerText = "Registrando...";
+      google.script.run.withSuccessHandler(res => {
+        if(res.error) { alert("Error: " + res.message); } else { alert(res.message); document.getElementById('formRetiroSocio').reset(); }
+        btn.disabled = false; btn.innerText = "Ejecutar Retiro";
+        cargarSocios(); cargarDashboardChart();
+      }).withFailureHandler(err => {
+        alert(err.message); btn.disabled = false; btn.innerText = "Ejecutar Retiro";
+      }).registrarPagoSocio(socioId, monto, document.getElementById('socioNotas').value);
+    });
+
+    // --- VENTAS Y CARRITO ---
+    function cargarDatosGenerales() {
+      google.script.run.withSuccessHandler(datos => {
+        inventarioGlobal = datos || []; document.getElementById('tablaInventario').innerHTML = '';
+        let valV = 0, valC = 0, st0 = 0, stB = 0, stE = 0;
+        if(inventarioGlobal.length === 0) document.getElementById('tablaInventario').innerHTML = filaVacia(7, 'No hay productos registrados.', 'package');
+        inventarioGlobal.forEach(i => {
+          let st = parseInt(i.stock), stM = parseInt(i.stockMinimo);
+          if(st > 0) { valV += st*i.precioVenta; valC += st*i.precioCompra; }
+          if(st === 0) st0++; else if (st <= stM) stB++; else stE++;
+          let badgeStock = st <= 0 ? `<span class="badge bg-red-100 text-red-700">${st}</span>` : (st <= stM ? `<span class="badge bg-amber-100 text-amber-800">${st}</span>` : `<span class="badge bg-emerald-100 text-emerald-700">${st}</span>`);
+          document.getElementById('tablaInventario').innerHTML += `<tr>
+            <td class="text-center">${i.foto ? `<img src="${i.foto}" class="w-10 h-10 rounded-lg object-cover border border-slate-200 mx-auto">` : `<div class="w-10 h-10 bg-slate-100 rounded-lg flex justify-center items-center mx-auto"><i data-feather="image" class="w-4 h-4 text-slate-300"></i></div>`}</td>
+            <td class="text-slate-400 font-mono text-xs">${i.codigo || '—'}</td><td class="font-semibold text-slate-900">${i.nombre}</td>
+            <td class="text-right text-slate-600">Gs. ${formMoneda.format(i.precioCompra)}</td><td class="text-right text-emerald-600 font-bold">Gs. ${formMoneda.format(i.precioVenta)}</td>
+            <td class="text-right">${badgeStock}</td>
+            <td class="text-center"><button type="button" onclick="abrirModal('${i.idAuto}')" class="btn btn-icono text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-feather="edit-2" class="w-4 h-4"></i></button></td></tr>`;
+        });
+        feather.replace(); document.getElementById('listaProductosVentas').innerHTML = inventarioGlobal.map(i => `<option value="${i.nombre}">`).join('');
+
+        let elT = document.getElementById('dashTotalProductos'); if(elT) elT.innerText = inventarioGlobal.length;
+        let elS = document.getElementById('dashSinStock'); if(elS) elS.innerText = st0;
+        let elB = document.getElementById('dashBajoStock'); if(elB) elB.innerText = stB;
+        let elE = document.getElementById('dashEnStock'); if(elE) elE.innerText = stE;
+      }).obtenerInventario();
+    }
+
+    function agregarAlCarrito() {
+      const nom = document.getElementById('venProductoInput').value; const prod = inventarioGlobal.find(p => p.nombre === nom);
+      if(!prod) return alert("Producto no válido");
+      const existe = carritoVentas.find(p => p.nombre === nom); if(existe) existe.cantidad++; else carritoVentas.push({...prod, cantidad: 1});
+      document.getElementById('venProductoInput').value = ''; renderCarrito();
+    }
+
+    function renderCarrito() {
+      let sub = 0; document.getElementById('tablaCarrito').innerHTML = '';
+      let totalItems = carritoVentas.reduce((a, p) => a + (parseInt(p.cantidad) || 0), 0);
+      document.getElementById('venCantItems').innerText = totalItems + (totalItems === 1 ? ' ítem' : ' ítems');
+      if(carritoVentas.length === 0) document.getElementById('tablaCarrito').innerHTML = filaVacia(5, 'El carrito está vacío. Busca un producto para comenzar.', 'shopping-cart');
+      carritoVentas.forEach((p, index) => {
+        let pr = parseFloat(p.precioVenta) || 0; sub += (p.cantidad * pr); let prForm = formMoneda.format(pr);
+        document.getElementById('tablaCarrito').innerHTML += `
+        <tr><td class="font-semibold text-slate-800">${p.nombre}</td>
+          <td><input type="number" min="1" value="${p.cantidad}" onchange="carritoVentas[${index}].cantidad=this.value; renderCarrito()" class="campo !w-20 !py-2 text-center font-bold"></td>
+          <td><input type="text" value="${prForm}" onfocus="this.value='${pr}'" onblur="carritoVentas[${index}].precioVenta=this.value.replace(/\\D/g, '') || 0; renderCarrito()" class="campo !w-36 !py-2 text-right font-bold !bg-emerald-50 !border-emerald-200 text-emerald-700"></td>
+          <td class="text-right font-extrabold text-slate-900">Gs. ${formMoneda.format(p.cantidad * pr)}</td>
+          <td class="text-right"><button type="button" onclick="carritoVentas.splice(${index},1); renderCarrito()" class="btn btn-icono text-slate-400 hover:text-red-600 hover:bg-red-50"><i data-feather="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+      });
+      feather.replace(); document.getElementById('venSubtotal').innerText = "Gs. " + formMoneda.format(sub); actualizarTotalesVentas(sub);
+    }
+
+    function actualizarTotalesVentas(sub) {
+      if(sub === undefined) sub = carritoVentas.reduce((acc, p) => acc + (p.cantidad * (parseFloat(p.precioVenta) || 0)), 0);
+      let desc = parseFloat(document.getElementById('venDescuento').value.replace(/\D/g, '')) || 0;
+      document.getElementById('venTotal').innerText = "Gs. " + formMoneda.format(Math.max(0, sub - desc));
+    }
+
+    function procesarVenta() {
+      if(carritoVentas.length === 0) return alert("El carrito está vacío.");
+      const rz = document.getElementById('venRazon').value.trim(), ruc = document.getElementById('venRuc').value.trim(), tel = document.getElementById('venTel').value.trim(), email = document.getElementById('venEmail').value.trim();
+      const tipoVenta = document.getElementById('venTipoVenta').value;
+      if(!rz) return alert("Razón Social es obligatoria para registrar la venta.");
+
+      let objCliente = { id: "", ruc: ruc, razon: rz, tel: tel, email: email, accion: 'crear' };
+      let ex = null;
+      if (clientesGlobal && Array.isArray(clientesGlobal)) {
+        if(ruc !== "") ex = clientesGlobal.find(c => String(c.ruc) === String(ruc));
+        else ex = clientesGlobal.find(c => String(c.razon).toLowerCase() === String(rz).toLowerCase());
+      }
+
+      if(ex) {
+        objCliente.id = ex.id;
+        if (ex.razon !== rz || ex.tel !== tel || ex.email !== email || ex.ruc !== ruc) {
+          objCliente.accion = confirm("Los datos ingresados para este cliente son diferentes a los guardados. ¿Deseas actualizar el cliente en la base de datos?") ? 'actualizar' : 'mantener';
+        } else {
+          objCliente.accion = 'mantener';
+        }
+      }
+
+      const btn = document.getElementById('btnProcesarVenta'); btn.disabled = true; btn.innerText = "Procesando...";
+      let subtotalVenta = carritoVentas.reduce((a, p) => a + (p.cantidad * (parseFloat(p.precioVenta)||0)), 0);
+      let descuentoVenta = parseFloat(document.getElementById('venDescuento').value.replace(/\D/g, '')) || 0;
+      let totalFinal = Math.max(0, subtotalVenta - descuentoVenta);
+
+      const carritoLimpio = carritoVentas.map(item => ({
+        nombre: String(item.nombre), cantidad: parseInt(item.cantidad, 10), precioVenta: parseFloat(item.precioVenta) || 0
+      }));
+
+      const payload = { cliente: objCliente, carrito: carritoLimpio, tipoVenta: String(tipoVenta), subtotal: parseFloat(subtotalVenta) || 0, descuentoMonto: parseFloat(descuentoVenta) || 0, total: parseFloat(totalFinal) || 0 };
+
+      google.script.run.withSuccessHandler(res => {
+        if (res.error) { alert("❌ " + res.message); btn.disabled = false; btn.innerText = "Finalizar Venta"; }
+        else {
+          btn.innerText = "¡Venta Registrada Exitosamente!"; btn.classList.replace('bg-green-500', 'bg-indigo-600');
+          setTimeout(()=>{ btn.disabled = false; btn.innerText = "Finalizar Venta"; btn.classList.replace('bg-indigo-600', 'bg-green-500'); }, 2500);
+          carritoVentas = []; renderCarrito(); cargarDatosGenerales(); cargarClientes(); cargarDashboardChart(); cargarSocios();
+          document.getElementById('venRuc').value = ''; document.getElementById('venRazon').value = '';
+          document.getElementById('venTel').value = ''; document.getElementById('venEmail').value = '';
+          document.getElementById('venDescuento').value = '0'; document.getElementById('msjClienteVentas').innerHTML = '';
+        }
+      }).withFailureHandler(err => { alert("Error de Conexión: " + err.message); btn.disabled = false; btn.innerText = "Finalizar Venta"; }).registrarVenta(payload);
+    }
+
+    // --- CLIENTES Y CRM ---
+    function cargarClientes() {
+      google.script.run.withSuccessHandler(datos => {
+        clientesGlobal = datos || [];
+        const tb = document.getElementById('tablaClientes'); tb.innerHTML = ''; document.getElementById('listaClientes').innerHTML = '';
+        if(clientesGlobal.length === 0) tb.innerHTML = filaVacia(6, 'Aún no hay clientes registrados.', 'users');
+        clientesGlobal.forEach(c => {
+          if(c.ruc) document.getElementById('listaClientes').innerHTML += `<option value="${c.ruc}">`; else if(c.razon) document.getElementById('listaClientes').innerHTML += `<option value="${c.razon}">`;
+          let deudaBadge = c.deudaActiva > 0 ? `<span class="badge bg-red-100 text-red-700 !text-xs">Gs. ${formMoneda.format(c.deudaActiva)}</span>` : `<span class="badge bg-emerald-50 text-emerald-700">Sin Deudas</span>`;
+          let btnCredito = c.creditosPendientes.length > 0 ? `<button type="button" onclick="verDeudasCliente('${c.id}')" class="btn btn-primario btn-sm"><i data-feather="credit-card" class="w-3.5 h-3.5"></i> Abonar</button>` : '';
+
+          tb.innerHTML += `<tr><td class="font-mono text-xs text-slate-500">${c.ruc}</td><td class="font-semibold text-slate-900">${c.razon}</td><td class="text-slate-500">${c.tel}</td><td class="text-right">${deudaBadge}</td>
+            <td class="text-center"><div class="flex justify-center gap-2">${btnCredito}<button type="button" onclick="abrirHistorialCompleto('${c.id}')" class="btn btn-blanco btn-sm" title="Historial Completo"><i data-feather="clipboard" class="w-3.5 h-3.5"></i> Historial</button></div></td>
+            <td class="text-center"><button type="button" onclick="abrirModalCliente('${c.id}')" class="btn btn-icono text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i data-feather="edit-2" class="w-4 h-4"></i></button></td></tr>`;
+        });
+        feather.replace();
+      }).obtenerClientes();
+    }
+
+    function filtrarClientes() {
+      const texto = document.getElementById('buscadorClientes').value.toLowerCase();
+      const filas = document.querySelectorAll('#tablaClientes tr');
+      filas.forEach(fila => {
+        const ruc = fila.cells[0]?.innerText.toLowerCase() || "";
+        const razon = fila.cells[1]?.innerText.toLowerCase() || "";
+        const tel = fila.cells[2]?.innerText.toLowerCase() || "";
+        if (ruc.includes(texto) || razon.includes(texto) || tel.includes(texto)) { fila.style.display = ''; } else { fila.style.display = 'none'; }
+      });
+    }
+
+    function autocompletarCliente() {
+      const v = document.getElementById('venRuc').value.trim(); const msj = document.getElementById('msjClienteVentas');
+      const c = clientesGlobal.find(x => String(x.ruc) === v || String(x.razon) === v);
+      if(c) { document.getElementById('venRuc').value = c.ruc || ""; document.getElementById('venRazon').value = c.razon || ""; document.getElementById('venTel').value = c.tel || ""; document.getElementById('venEmail').value = c.email || ""; msj.innerHTML = '<span class="badge bg-emerald-50 text-emerald-700">✓ Cliente Detectado</span>'; } else { msj.innerHTML = '<span class="badge bg-sky-50 text-sky-700">+ Nuevo Cliente</span>'; }
+    }
+
+    function abrirModalCliente(id) {
+      const c = clientesGlobal.find(x => x.id === id);
+      if(!c) return;
+      document.getElementById('editIdCliente').value = c.id;
+      document.getElementById('editRucCli').value = c.ruc;
+      document.getElementById('editRazonCli').value = c.razon;
+      document.getElementById('editTelCli').value = c.tel;
+      document.getElementById('editEmailCli').value = c.email;
+      document.getElementById('modalEditarCliente').classList.add('activo');
+    }
+
+    function guardarEdicionCliente(btnElement) {
+      const originalText = btnElement.innerText;
+      btnElement.innerText = "Guardando..."; btnElement.disabled = true;
+      google.script.run.withSuccessHandler((msg) => {
+        cerrarModal('modalEditarCliente'); cargarClientes();
+        btnElement.innerText = originalText; btnElement.disabled = false;
+      }).withFailureHandler((err) => {
+        alert("Error: " + err.message);
+        btnElement.innerText = originalText; btnElement.disabled = false;
+      }).gestionarCliente({
+        id: document.getElementById('editIdCliente').value, accion: 'actualizar', ruc: document.getElementById('editRucCli').value, razon: document.getElementById('editRazonCli').value, tel: document.getElementById('editTelCli').value, email: document.getElementById('editEmailCli').value
+      });
+    }
+
+    function eliminarClienteModal(btnElement) {
+      if(confirm("¿Eliminar este cliente?")) {
+        btnElement.innerText = "..."; btnElement.disabled = true;
+        google.script.run.withSuccessHandler((msg) => {
+          alert(msg); cerrarModal('modalEditarCliente'); cargarClientes();
+          btnElement.innerText = "Eliminar"; btnElement.disabled = false;
+        }).withFailureHandler((err) => {
+          alert("Error: " + err.message); btnElement.innerText = "Eliminar"; btnElement.disabled = false;
+        }).gestionarCliente({id: document.getElementById('editIdCliente').value, accion: 'eliminar'});
+      }
+    }
+
+    function verDeudasCliente(id) {
+      const c = clientesGlobal.find(x => x.id === id);
+      if(!c) return;
+      document.getElementById('nombreDeudor').innerText = c.razon; const tb = document.getElementById('tablaDeudasContenido'); tb.innerHTML = '';
+      c.creditosPendientes.forEach(cred => {
+        let iStr = cred.items.map(i => `<span class="font-semibold text-slate-700">${i.cantidad}×</span> ${i.nombre}`).join('<br>');
+        tb.innerHTML += `<tr><td class="text-slate-500 align-top">${new Date(cred.fecha).toLocaleDateString()}</td><td class="text-slate-600 leading-relaxed align-top">${iStr}</td>
+          <td class="text-right align-top"><div class="text-xs text-slate-500">Total: Gs. ${formMoneda.format(cred.total)}</div><div class="text-xs text-emerald-600 font-semibold mt-0.5">Pagado: Gs. ${formMoneda.format(cred.pagado)}</div><div class="badge bg-red-100 text-red-700 mt-1.5">Falta: Gs. ${formMoneda.format(cred.restante)}</div></td>
+          <td class="text-center"><div class="flex flex-col items-center gap-2"><input type="number" id="pago_${cred.idVenta}" placeholder="Monto Gs..." max="${cred.restante}" class="campo !w-36 !py-2 text-center font-bold"><button type="button" onclick="abonarCredito('${cred.idVenta}', '${cred.restante}', this)" class="btn btn-exito btn-sm !w-36">Aplicar Pago</button></div></td></tr>`;
+      });
+      document.getElementById('modalDeudaCliente').classList.add('activo');
+    }
+
+    function abonarCredito(idVenta, maximo, btn) {
+      let input = document.getElementById('pago_'+idVenta);
+      let monto = parseFloat(input.value);
+      if(!monto || monto <= 0) return alert("Ingrese un monto válido mayor a 0.");
+      if(monto > parseFloat(maximo)) return alert("El monto no puede superar la deuda restante.");
+      if(!confirm(`¿Registrar abono de Gs. ${formMoneda.format(monto)} a esta venta?`)) return;
+
+      btn.innerText = "Procesando..."; btn.disabled = true;
+      google.script.run.withSuccessHandler(res => {
+        alert(res); cerrarModal('modalDeudaCliente'); cargarClientes(); cargarDashboardChart(); cargarSocios();
+      }).withFailureHandler(err => {
+        alert("Error: " + err.message); btn.innerText = "Aplicar Pago"; btn.disabled = false;
+      }).registrarPagoCredito(idVenta, monto);
+    }
+
+    function abrirHistorialCompleto(id) {
+      const c = clientesGlobal.find(x => x.id === id);
+      if(!c) return;
+      document.getElementById('lblNombreClienteHistorial').innerText = c.razon;
+      document.getElementById('tablaHistorialComprasCliente').innerHTML = filaVacia(5, 'Buscando...', 'loader');
+      document.getElementById('tablaHistorialPagosCliente').innerHTML = filaVacia(3, 'Buscando...', 'loader');
+      feather.replace();
+      switchTabHistorial('compras');
+      document.getElementById('modalHistorialCompletoCliente').classList.add('activo');
+
+      google.script.run.withSuccessHandler(res => {
+        let htmlC = ''; if(res.ventas.length === 0) htmlC = filaVacia(5, 'No hay compras.', 'shopping-bag');
+        res.ventas.forEach(v => {
+            let bTipo = v.tipo === 'Credito' ? `<span class="badge bg-amber-100 text-amber-800">Crédito</span>` : `<span class="badge bg-emerald-100 text-emerald-700">Contado</span>`;
+            let bEst = v.estado === 'Pendiente' ? `<span class="badge bg-red-100 text-red-700">Con Deuda</span>` : `<span class="badge bg-sky-100 text-sky-700">Pagado</span>`;
+            htmlC += `<tr><td class="text-slate-500">${new Date(v.fecha).toLocaleDateString()}</td><td class="text-slate-600">${v.items.map(i=>`<span class="font-semibold text-slate-700">${i.cantidad}×</span> ${i.nombre}`).join('<br>')}</td><td class="text-center">${bTipo}</td><td class="text-right font-bold text-slate-900">Gs. ${formMoneda.format(v.total)}</td><td class="text-center">${bEst}</td></tr>`;
+        });
+        document.getElementById('tablaHistorialComprasCliente').innerHTML = htmlC;
+        let htmlP = ''; if(res.pagos.length === 0) htmlP = filaVacia(3, 'No hay pagos.', 'credit-card');
+        res.pagos.forEach(p => { htmlP += `<tr><td class="text-slate-500">${new Date(p.fecha).toLocaleDateString()}</td><td class="text-xs font-mono text-slate-400">${p.idVenta}</td><td class="text-right font-bold text-emerald-600">+ Gs. ${formMoneda.format(p.monto)}</td></tr>`; });
+        document.getElementById('tablaHistorialPagosCliente').innerHTML = htmlP;
+        feather.replace();
+      }).obtenerHistorialCliente(c.ruc, c.razon);
+    }
+
+    function switchTabHistorial(tab) {
+      const esCompras = tab === 'compras';
+      document.getElementById('tabCompras').classList.toggle('hidden', !esCompras);
+      document.getElementById('tabPagos').classList.toggle('hidden', esCompras);
+      document.getElementById('tabBtnCompras').classList.toggle('subtab-activo', esCompras);
+      document.getElementById('tabBtnPagos').classList.toggle('subtab-activo', !esCompras);
+    }
+
+    // --- MODALES GENERALES ---
+    function cerrarModal(id) { document.getElementById(id).classList.remove('activo'); }
+
+    // Cerrar modales al hacer click en el fondo o con la tecla Escape
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('mousedown', e => { if(e.target === m) cerrarModal(m.id); }));
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') document.querySelectorAll('.modal.activo').forEach(m => cerrarModal(m.id)); });
+
+    // --- REPORTES ---
+    function cargarHistorial() {
+      const tb = document.getElementById('tablaHistorial'); tb.innerHTML = filaVacia(6, 'Cargando...', 'loader'); feather.replace();
+      google.script.run.withSuccessHandler(datos => {
+        tb.innerHTML = '';
+        const filtrados = datos.filter(d => document.getElementById('filtroTipo').value === 'Todos' || d.tipo === document.getElementById('filtroTipo').value);
+        if(filtrados.length === 0) tb.innerHTML = filaVacia(6, 'No hay movimientos en el período seleccionado.');
+        filtrados.forEach(d => {
+          const colores = { 'Venta': 'bg-indigo-100 text-indigo-700', 'Entrada': 'bg-emerald-100 text-emerald-700', 'Salida': 'bg-amber-100 text-amber-800' };
+          let b = `<span class="badge ${colores[d.tipo] || 'bg-slate-100 text-slate-700'}">${d.tipo}</span>`;
+          tb.innerHTML += `<tr><td class="text-slate-500">${new Date(d.fecha).toLocaleDateString()}</td><td class="font-semibold text-slate-800">${d.producto}</td><td>${b}</td><td class="text-right font-bold">${d.cantidad}</td><td class="text-right text-slate-600">Gs. ${formMoneda.format(d.total)}</td>
+          <td class="text-slate-400 italic">${d.notas || ''}</td></tr>`;
+        });
+        feather.replace();
+      }).obtenerMovimientos(parseInt(document.getElementById('filtroDias').value) || 30);
+    }
+
+    // --- CONFIGURACIÓN ---
+    function tabConfig(tab) {
+      const tabs = { tabTienda: 'btnTabTienda', tabConfSocios: 'btnTabConfSocios', tabUsuarios: 'btnTabUsuarios', tabAccesos: 'btnTabAccesos' };
+      Object.keys(tabs).forEach(t => {
+        document.getElementById(t).classList.toggle('hidden', t !== tab);
+        document.getElementById(tabs[t]).classList.toggle('subtab-activo', t === tab);
+      });
+      if(tab === 'tabConfSocios') renderConfigSocios();
+      if(tab === 'tabUsuarios') cargarUsuariosConfig();
+      if(tab === 'tabAccesos') cargarAccesos();
+    }
+
+    function renderConfigSocios() {
+      const container = document.getElementById('listaConfigSocios'); container.innerHTML = '';
+      if(configSociosTemp.length === 0) configSociosTemp.push({id: "", nombre: "", porcentaje: 0});
+      configSociosTemp.forEach((s, i) => {
+        container.innerHTML += `<div class="flex gap-3 items-center">
+          <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs flex-shrink-0">${i + 1}</div>
+          <input type="text" placeholder="Nombre Socio" value="${s.nombre}" onchange="configSociosTemp[${i}].nombre=this.value" class="campo flex-1">
+          <div class="relative w-28 flex-shrink-0">
+            <input type="number" step="0.01" placeholder="0" value="${s.porcentaje}" onchange="configSociosTemp[${i}].porcentaje=this.value" class="campo text-right font-semibold" style="padding-right:2rem">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-semibold pointer-events-none">%</span>
+          </div>
+          <button type="button" onclick="configSociosTemp.splice(${i},1); renderConfigSocios()" class="btn btn-icono text-slate-400 hover:text-red-600 hover:bg-red-50"><i data-feather="trash-2" class="w-4 h-4"></i></button></div>`;
+      });
+      feather.replace();
+    }
+
+    function agregarInputSocioConfig() { configSociosTemp.push({id: "", nombre: "", porcentaje: 0}); renderConfigSocios(); }
+
+    function guardarConfiguracionSocios(btnElement) {
+      let suma = configSociosTemp.reduce((a,b)=>a+parseFloat(String(b.porcentaje).replace(',','.')||0),0);
+      if(Math.abs(suma-100)>0.1) return alert(`Los porcentajes suman ${suma.toFixed(2)}%. Debe ser exactamente 100%.`);
+
+      configSociosTemp.forEach(s => s.porcentaje = parseFloat(String(s.porcentaje).replace(',','.')) || 0);
+
+      const originalText = btnElement.innerText;
+      btnElement.innerText = "Guardando..."; btnElement.disabled = true;
+      google.script.run.withSuccessHandler(res=>{
+        if(res.error) alert(res.message); else { alert(res.message); cargarSocios(); }
+        btnElement.innerText = originalText; btnElement.disabled = false;
+      }).withFailureHandler(e=>{
+        alert("Error: " + e.message); btnElement.innerText = originalText; btnElement.disabled = false;
+      }).guardarConfigSocios(configSociosTemp);
+    }
+
+    function cargarUsuariosConfig() {
+      google.script.run.withSuccessHandler(datos => {
+        const tb = document.getElementById('tablaUsuarios'); tb.innerHTML = '';
+        datos.forEach(u => {
+          let hideBorrar = (u.usuario === 'JCO' || u.id === usuarioActual.id) ? 'invisible' : '';
+          tb.innerHTML += `<tr><td><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">${String(u.usuario).charAt(0).toUpperCase()}</div><div><p class="font-semibold text-slate-900">${u.usuario}</p><p class="text-xs text-slate-400">${u.rol}</p></div></div></td><td class="text-center text-xs text-slate-400 tracking-widest">••••••</td><td class="text-center"><button type="button" onclick="eliminarUsuario('${u.id}', '${u.usuario}')" class="btn btn-icono text-slate-400 hover:text-red-600 hover:bg-red-50 ${hideBorrar}"><i data-feather="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+        }); feather.replace();
+      }).obtenerUsuarios();
+    }
+
+    document.getElementById('formUsuario').addEventListener('submit', e => {
+      e.preventDefault(); let pm = []; document.querySelectorAll('.permiso-chk:checked').forEach(c => pm.push(c.value));
+      const p = { accion: 'crear', usuario: document.getElementById('usrNombre').value, pass: document.getElementById('usrPass').value, rol: 'Usuario', permisos: pm };
+      google.script.run.withSuccessHandler(() => { alert("Usuario Creado"); document.getElementById('formUsuario').reset(); cargarUsuariosConfig(); }).withFailureHandler(err => alert("Error: " + err.message)).gestionarUsuario(p);
+    });
+
+    function eliminarUsuario(id, nom) {
+      if(!confirm(`¿Eliminar al usuario ${nom}?`)) return;
+      google.script.run.withSuccessHandler(() => { alert("Eliminado"); cargarUsuariosConfig(); }).withFailureHandler(err=>alert("Error: " + err.message)).gestionarUsuario({id: id, accion: 'eliminar'});
+    }
+
+    function cargarAccesos() {
+      google.script.run.withSuccessHandler(datos => {
+        const tb = document.getElementById('tablaAccesos'); tb.innerHTML = '';
+        if(datos.length === 0) tb.innerHTML = filaVacia(3, 'Sin registros de acceso.');
+        datos.forEach(a => {
+          const ok = a.evento.includes('Exitoso');
+          tb.innerHTML += `<tr><td class="text-slate-500">${new Date(a.fecha).toLocaleString()}</td><td class="font-semibold text-slate-800">${a.usuario}</td><td><span class="badge ${ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${a.evento}</span></td></tr>`;
+        });
+        feather.replace();
+      }).obtenerAccesos();
+    }
+
+    document.getElementById('formularioMovimiento').addEventListener('submit', e => {
+      e.preventDefault();
+      const btn = document.getElementById('btnGuardarMov');
+      const txtOrig = btn.innerText;
+      btn.innerText = "Registrando..."; btn.disabled = true;
+      google.script.run.withSuccessHandler(() => {
+        alert("Ajuste registrado exitosamente");
+        document.getElementById('formularioMovimiento').reset();
+        cargarDatosGenerales();
+        btn.innerText = txtOrig; btn.disabled = false;
+      }).withFailureHandler((err) => {
+        alert("Error: " + err.message);
+        btn.innerText = txtOrig; btn.disabled = false;
+      }).registrarMovimiento(
+        document.getElementById('productoMovimiento').value,
+        document.getElementById('tipoMov').value,
+        document.getElementById('cantidadMov').value,
+        document.getElementById('precioMov').value,
+        document.getElementById('notasMov').value
+      );
+    });
+
+    document.getElementById('formCrearProducto').addEventListener('submit', async e => {
+      e.preventDefault();
+      const files = document.getElementById('fotosProducto').files;
+      let base64 = files.length > 0 ? await new Promise(r=>{let fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(files[0]);}) : "";
+
+      google.script.run.withSuccessHandler(() => {
+        alert("Producto Creado");
+        document.getElementById('formCrearProducto').reset();
+        cargarDatosGenerales();
+      }).crearProducto({
+        codigo: document.getElementById('codigoProducto').value,
+        nombre: document.getElementById('nuevoNombre').value,
+        stockMinimo: document.getElementById('stockMinimo').value,
+        precioCompra: document.getElementById('precioCompra').value,
+        precioVenta: document.getElementById('precioVenta').value,
+        foto1: base64
+      });
+    });
+
+    document.getElementById('formConfigTienda').addEventListener('submit', e => {
+      e.preventDefault();
+      google.script.run.withSuccessHandler(cargarConfigGlobal).guardarConfiguracionTienda(document.getElementById('inputNombreTienda').value, null);
+    });
+
+    function inicializarBase() {
+      if(confirm("¿Estás seguro de que deseas crear/actualizar las hojas necesarias de Google Sheets?")) {
+        google.script.run.withSuccessHandler(alert).inicializarSistema();
+      }
+    }
+
+    function borrarTodo() {
+      if(confirm("¡ALERTA MÁXIMA!\n\n¿Estás absolutamente seguro de querer BORRAR TODOS LOS DATOS del sistema? Esta acción es irreversible.")) {
+        google.script.run.withSuccessHandler(() => {
+          alert("Sistema Borrado"); location.reload();
+        }).borrarTodoElSistema();
+      }
+    }
+  </script>
+</body>
+</html>
